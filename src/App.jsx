@@ -560,9 +560,7 @@ function App() {
                 <p className="text-gray-300 text-lg md:text-xl max-w-3xl mx-auto leading-relaxed mb-2">
                   Ten wyjątkowy dar będzie można rozpakować już niebawem.
                 </p>
-                <p className="text-gray-400 text-sm md:text-base max-w-2xl mx-auto leading-relaxed">
-                  Świat kolorów i emocji śpi w ciszy, czekając na swój moment ujawnienia.
-                </p>
+               
               </motion.div>
 
               <motion.div
@@ -637,7 +635,7 @@ function App() {
                 className="text-center"
               >
                 <p className="text-gray-500 text-xs md:text-sm uppercase tracking-wider mb-4">
-                  Premiera 24 września 2025, 6:00 CET
+                  Premiera 24 września 2025
                 </p>
                 <motion.div
                   animate={{ opacity: [0.5, 1, 0.5] }}
