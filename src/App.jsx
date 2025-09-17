@@ -77,6 +77,37 @@ function App() {
   const [currentSection, setCurrentSection] = useState(0)
   const [selectedPainting, setSelectedPainting] = useState(null)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [timeRemaining, setTimeRemaining] = useState(null)
+  const [showCountdown, setShowCountdown] = useState(false)
+
+  // Birthday date: 24.09.2025 6AM CET
+  let birthdayDate = new Date('2025-09-24T06:00:00+02:00') 
+  // birthdayDate = new Date('2025-09-17T22:29:00+01:00') // 23:44 CET
+
+  // Countdown logic
+  useEffect(() => {
+    const updateCountdown = () => {
+      const now = new Date()
+      const difference = birthdayDate.getTime() - now.getTime()
+
+      if (difference > 0) {
+        const days = Math.floor(difference / (1000 * 60 * 60 * 24))
+        const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+        const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60))
+        const seconds = Math.floor((difference % (1000 * 60)) / 1000)
+
+        setTimeRemaining({ days, hours, minutes, seconds })
+        setShowCountdown(true)
+      } else {
+        setShowCountdown(false)
+      }
+    }
+
+    updateCountdown()
+    const interval = setInterval(updateCountdown, 1000)
+
+    return () => clearInterval(interval)
+  }, [])
 
   const sectionNames = ['home', 'about', 'prace-header', 'prace-gallery1', 'prace-gallery2', 'contact']
   
@@ -503,6 +534,120 @@ function App() {
                 </div>
               </div>
             </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Birthday Countdown Overlay */}
+      <AnimatePresence>
+        {showCountdown && timeRemaining && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/95 flex items-center justify-center z-[100] backdrop-blur-sm"
+          >
+            <div className="text-center max-w-4xl mx-auto px-6">
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 1, delay: 0.5 }}
+                className="mb-12"
+              >
+                <h1 className="text-4xl md:text-6xl lg:text-7xl font-light text-white mb-6 tracking-wide">
+                  Prezent czeka...
+                </h1>
+                <p className="text-gray-300 text-lg md:text-xl max-w-3xl mx-auto leading-relaxed mb-2">
+                  Ten wyjątkowy dar będzie można rozpakować już niebawem.
+                </p>
+                <p className="text-gray-400 text-sm md:text-base max-w-2xl mx-auto leading-relaxed">
+                  Świat kolorów i emocji śpi w ciszy, czekając na swój moment ujawnienia.
+                </p>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.8, delay: 1 }}
+                className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg p-8 md:p-12 mb-8"
+              >
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
+                  <div className="text-center">
+                    <motion.div
+                      key={timeRemaining.days}
+                      initial={{ scale: 1.2 }}
+                      animate={{ scale: 1 }}
+                      className="text-3xl md:text-5xl lg:text-6xl font-light text-white mb-2"
+                    >
+                      {timeRemaining.days}
+                    </motion.div>
+                    <div className="text-gray-400 text-xs md:text-sm uppercase tracking-wider">
+                      dni
+                    </div>
+                  </div>
+                  
+                  <div className="text-center">
+                    <motion.div
+                      key={timeRemaining.hours}
+                      initial={{ scale: 1.2 }}
+                      animate={{ scale: 1 }}
+                      className="text-3xl md:text-5xl lg:text-6xl font-light text-white mb-2"
+                    >
+                      {timeRemaining.hours}
+                    </motion.div>
+                    <div className="text-gray-400 text-xs md:text-sm uppercase tracking-wider">
+                      godzin
+                    </div>
+                  </div>
+                  
+                  <div className="text-center">
+                    <motion.div
+                      key={timeRemaining.minutes}
+                      initial={{ scale: 1.2 }}
+                      animate={{ scale: 1 }}
+                      className="text-3xl md:text-5xl lg:text-6xl font-light text-white mb-2"
+                    >
+                      {timeRemaining.minutes}
+                    </motion.div>
+                    <div className="text-gray-400 text-xs md:text-sm uppercase tracking-wider">
+                      minut
+                    </div>
+                  </div>
+                  
+                  <div className="text-center">
+                    <motion.div
+                      key={timeRemaining.seconds}
+                      initial={{ scale: 1.2 }}
+                      animate={{ scale: 1 }}
+                      className="text-3xl md:text-5xl lg:text-6xl font-light text-white mb-2"
+                    >
+                      {timeRemaining.seconds}
+                    </motion.div>
+                    <div className="text-gray-400 text-xs md:text-sm uppercase tracking-wider">
+                      sekund
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 1, delay: 1.5 }}
+                className="text-center"
+              >
+                <p className="text-gray-500 text-xs md:text-sm uppercase tracking-wider mb-4">
+                  Premiera 24 września 2025, 6:00 CET
+                </p>
+                <motion.div
+                  animate={{ opacity: [0.5, 1, 0.5] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                  className="inline-block"
+                >
+                  <div className="w-2 h-2 bg-white rounded-full"></div>
+                </motion.div>
+              </motion.div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
