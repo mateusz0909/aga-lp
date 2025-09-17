@@ -1,10 +1,8 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Menu, X } from 'lucide-react'
 import { Button } from '@/components/ui/button.jsx'
-import LocomotiveScroll from 'locomotive-scroll'
 import './App.css'
-import './locomotive-scroll.css'
 
 // Import images
 import signatureImage from './assets/signature.png'
@@ -78,81 +76,55 @@ function App() {
   const [currentSection, setCurrentSection] = useState('home')
   const [selectedPainting, setSelectedPainting] = useState(null)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const scrollRef = useRef(null)
-  const locomotiveScrollRef = useRef(null)
 
-  // Initialize Locomotive Scroll
-  useEffect(() => {
-    if (scrollRef.current) {
-      locomotiveScrollRef.current = new LocomotiveScroll({
-        el: scrollRef.current,
-        smooth: true,
-        smoothMobile: true,
-        multiplier: 0.7, // Reduced for smoother scrolling
-        class: 'is-revealed',
-        scrollbarContainer: false,
-        lerp: 0.0, // Much lower for smoother interpolation (was 0.1)
-        inertia: 0.6, // Adds smooth momentum
-        smartphone: {
-          smooth: true,
-          lerp: 0.04, // Even smoother on mobile
-          multiplier: 0.6
-        },
-        tablet: {
-          smooth: true,
-          lerp: 0.05,
-          multiplier: 0.65
-        }
-      })
-
-      // Update current section on scroll
-      locomotiveScrollRef.current.on('scroll', (instance) => {
-        const scroll = instance.scroll.y
-        const windowHeight = window.innerHeight
-        const sections = ['home', 'prace', 'about', 'contact']
-        
-        sections.forEach(sectionId => {
-          const section = document.getElementById(sectionId)
-          if (section) {
-            const rect = section.getBoundingClientRect()
-            const sectionTop = scroll + rect.top
-            const sectionHeight = rect.height
-            
-            // Check if section is in the middle of viewport
-            if (scroll >= sectionTop - windowHeight / 2 && 
-                scroll < sectionTop + sectionHeight - windowHeight / 2) {
-              setCurrentSection(sectionId)
-            }
-          }
-        })
-      })
-
-      return () => {
-        if (locomotiveScrollRef.current) {
-          locomotiveScrollRef.current.destroy()
-        }
+  // Function to determine which section is currently in view
+  const getCurrentSection = () => {
+    const sections = ['home', 'prace', 'about', 'contact']
+    const scrollPosition = window.scrollY + window.innerHeight / 2
+    
+    for (let i = sections.length - 1; i >= 0; i--) {
+      const section = document.getElementById(sections[i])
+      if (section && section.offsetTop <= scrollPosition) {
+        return sections[i]
       }
     }
-  }, [])
+    return 'home'
+  }
+
+  // Scroll event listener to update active section
+  useEffect(() => {
+    const handleScroll = () => {
+      const section = getCurrentSection()
+      if (section !== currentSection) {
+        setCurrentSection(section)
+      }
+    }
+
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    
+    // Set initial section on mount
+    handleScroll()
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll)
+    }
+  }, [currentSection])
 
   const scrollToSection = (section) => {
     setCurrentSection(section)
     setIsMenuOpen(false)
     
-    if (locomotiveScrollRef.current) {
-      const targetElement = document.getElementById(section)
-      if (targetElement) {
-        locomotiveScrollRef.current.scrollTo(targetElement, {
-          duration: 2000, // Increased duration for smoother transition
-          easing: [0.25, 0.46, 0.45, 0.94], // Smoother easing curve
-          disableLerp: false // Allow smooth interpolation during scroll
-        })
-      }
+    const targetElement = document.getElementById(section)
+    if (targetElement) {
+      targetElement.scrollIntoView({ 
+        behavior: 'smooth',
+        block: 'start'
+      })
     }
   }
 
   return (
-    <div ref={scrollRef} data-scroll-container className="min-h-screen bg-white text-black">
+    <div className="min-h-screen bg-white text-black scroll-smooth" style={{scrollSnapType: 'y mandatory'}}>
       {/* Navigation */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-sm border-b border-gray-200">
         <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
@@ -218,13 +190,9 @@ function App() {
       </nav>
 
       {/* Hero Section */}
-      <section id="home" data-scroll-section className="min-h-screen flex items-center justify-center px-6 bg-gradient-to-b from-white to-gray-50 relative overflow-hidden">
-        {/* Parallax background element */}
-        <div 
-          data-scroll 
-          data-scroll-speed="-2" 
-          className="absolute inset-0 bg-gradient-to-br from-gray-50/30 to-gray-100/20"
-        ></div>
+      <section id="home" className="min-h-screen flex items-center justify-center px-6 bg-gradient-to-b from-white to-gray-50 relative overflow-hidden snap-start">
+        {/* Background element */}
+        <div className="absolute inset-0 bg-gradient-to-br from-gray-50/30 to-gray-100/20"></div>
         
         <div className="text-center max-w-6xl relative z-10">
           <motion.div
@@ -232,27 +200,19 @@ function App() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
           >
-            <div data-scroll data-scroll-speed="-1">
+            <div>
               <img 
                 src={logoImage} 
                 alt="Agnieszka Byrtus" 
                 className="h-32 sm:h-48 md:h-56 lg:h-70 mx-auto mb-8 sm:mb-10 md:mb-12 max-w-full object-contain" 
               />
             </div>
-            <h1 
-              data-scroll 
-              data-scroll-speed="1" 
-              className="text-5xl md:text-5xl lg:text-[8rem] font-light spacing-tight mb-8  leading-none tracking-normal"
-            >
+            <h1 className="text-5xl md:text-5xl lg:text-[8rem] font-light spacing-tight mb-8  leading-none tracking-normal">
               agnieszka 
               <br />
               byrtus
             </h1>
-            <p 
-              data-scroll 
-              data-scroll-speed="-0.5" 
-              className="text-2xl md:text-lg lg:text-2xl text-gray-600 mb-12 pt-16 font-light tracking-wide uppercase"
-            >
+            <p className="text-2xl md:text-lg lg:text-2xl text-gray-600 mb-12 pt-16 font-light tracking-wide uppercase">
               ślady istnienia
             </p>
             <motion.div
@@ -263,8 +223,6 @@ function App() {
                 onClick={() => scrollToSection('prace')}
                 variant="outline"
                 className="animated-button border-black text-black cursor-pointer rounded-none text-xs uppercase tracking-wider px-16 py-3 relative overflow-hidden"
-                data-scroll 
-                data-scroll-speed="0.2"
               >
                 <span className="relative z-10">Zobacz prace</span>
               </Button>
@@ -274,13 +232,9 @@ function App() {
       </section>
 
       {/* prace Section - Introduction */}
-      <section id="prace" data-scroll-section className="min-h-screen py-20 px-6 flex items-center relative">
-        {/* Parallax background */}
-        <div 
-          data-scroll 
-          data-scroll-speed="-1" 
-          className="absolute inset-0 bg-gradient-to-t from-gray-50/20 to-transparent"
-        ></div>
+      <section id="prace" className="min-h-screen py-20 px-6 flex items-center relative snap-start">
+        {/* Background */}
+        <div className="absolute inset-0 bg-gradient-to-t from-gray-50/20 to-transparent"></div>
         
         <div className="max-w-6xl mx-auto w-full relative z-10">
           <motion.div
@@ -290,18 +244,10 @@ function App() {
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <h2 
-              data-scroll 
-              data-scroll-speed="0.3" 
-              className="text-6xl md:text-7xl font-light mb-6 tracking-wide"
-            >
+            <h2 className="text-6xl md:text-7xl font-light mb-6 tracking-wide">
               prace
             </h2>
-            <p 
-              data-scroll 
-              data-scroll-speed="-0.2" 
-              className="text-gray-600 max-w-3xl mx-auto text-sm mb-12"
-            >
+            <p className="text-gray-600 max-w-3xl mx-auto text-sm mb-12">
               Świat, w którym forma staje się językiem duszy. Każdy obraz to zapisana emocja, ślad ciszy, szept istnienia.
             </p>
             <p className="text-gray-500 text-xs uppercase tracking-wider">
@@ -312,7 +258,7 @@ function App() {
       </section>
 
       {/* Portfolio Page 1 - Paintings 1-3 */}
-      <section data-scroll-section className="min-h-screen py-20 px-6 flex items-center relative">
+      <section className="min-h-screen py-20 px-6 flex items-center relative snap-start">
         <div className="max-w-6xl mx-auto w-full">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-center">
             {paintings.slice(0, 3).map((painting, index) => (
@@ -349,7 +295,7 @@ function App() {
       </section>
 
       {/* Portfolio Page 2 - Paintings 4-6 */}
-      <section data-scroll-section className="min-h-screen py-20 px-6 flex items-center relative bg-gray-50/30">
+      <section className="min-h-screen py-20 px-6 flex items-center relative bg-gray-50/30 snap-start">
         <div className="max-w-6xl mx-auto w-full">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-center">
             {paintings.slice(3, 6).map((painting, index) => (
@@ -384,13 +330,9 @@ function App() {
       </section>
 
       {/* About Section */}
-      <section id="about" data-scroll-section className="py-32 px-6 bg-gray-50 min-h-screen flex items-center relative overflow-hidden">
-        {/* Parallax background element */}
-        <div 
-          data-scroll 
-          data-scroll-speed="-2" 
-          className="absolute inset-0 bg-gradient-to-br from-white/40 to-gray-100/30"
-        ></div>
+      <section id="about" className="py-32 px-6 bg-gray-50 min-h-screen flex items-center relative overflow-hidden snap-start">
+        {/* Background element */}
+        <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-gray-100/30"></div>
         
         <div className="max-w-6xl mx-auto w-full relative z-10">
           {/* Mobile-first layout: flex-col, then lg:grid */}
@@ -403,8 +345,6 @@ function App() {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8 }}
                 viewport={{ once: true }}
-                data-scroll 
-                data-scroll-speed="0.4" 
                 className="text-5xl md:text-6xl font-light mb-8 tracking-wide"
               >
                 o mnie
@@ -437,15 +377,11 @@ function App() {
               className="order-2 lg:order-1 w-full"
             >
               {/* Desktop heading - hidden on mobile */}
-              <h2 
-                data-scroll 
-                data-scroll-speed="0.4" 
-                className="hidden lg:block text-6xl md:text-7xl font-light mb-8 tracking-wide"
-              >
+              <h2 className="hidden lg:block text-6xl md:text-7xl font-light mb-8 tracking-wide">
                 o mnie
               </h2>
               
-              <div data-scroll data-scroll-speed="-0.2">
+              <div>
                 <p className="text-gray-700 leading-relaxed mb-6 text-sm">
                   Płótno jest dla mnie przestrzenią ciszy, w której szukam dialogu z tym, co niewyrażalne. Moja twórczość rodzi się z potrzeby introspekcji i zatrzymania się nad fundamentalnymi pytaniami o ludzką egzystencję. 
                   Mieszkam i tworzę w Warszawie. Jestem osobą niezwykle wrażliwą i głęboko myślącą, 
@@ -468,13 +404,9 @@ function App() {
     
 
       {/* Contact Section */}
-      <section id="contact" data-scroll-section className="py-16 md:py-24 lg:py-32 px-6 bg-gray-50 min-h-screen flex items-start md:items-center justify-center relative overflow-hidden">
-        {/* Parallax background */}
-        <div 
-          data-scroll 
-          data-scroll-speed="-1.5" 
-          className="absolute inset-0 bg-gradient-to-t from-white/60 to-gray-100/30"
-        ></div>
+      <section id="contact" className="py-16 md:py-24 lg:py-32 px-6 bg-gray-50 min-h-screen flex items-start md:items-center justify-center relative overflow-hidden snap-start">
+        {/* Background */}
+        <div className="absolute inset-0 bg-gradient-to-t from-white/60 to-gray-100/30"></div>
 
         <div className="max-w-4xl mx-auto text-center w-full relative pt-8 md:pt-0">
           <motion.div
@@ -484,18 +416,10 @@ function App() {
             viewport={{ once: true }}
             
           >
-            <h2 
-              data-scroll 
-              data-scroll-speed="0.5" 
-              className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-light mb-6 md:mb-8 tracking-wide"
-            >
+            <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-light mb-6 md:mb-8 tracking-wide">
               kontakt
             </h2>
-            <p 
-              data-scroll 
-              data-scroll-speed="-0.3" 
-              className="text-gray-700 mb-8 md:mb-12 max-w-2xl mx-auto text-sm leading-relaxed"
-            >
+            <p className="text-gray-700 mb-8 md:mb-12 max-w-2xl mx-auto text-sm leading-relaxed">
               Jeśli któraś z moich prac poruszyła Cię – napisz do mnie. 
               <br />
               Chętnie opowiem więcej o swojej twórczości lub porozmawiam o możliwościach współpracy.
