@@ -46,6 +46,10 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
+.fp-watermark {
+  display: none !important;
+}
+
 :root {
   --radius: 0px;
   --background: oklch(1 0 0);

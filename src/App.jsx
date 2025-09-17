@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
+import ReactFullpage from '@fullpage/react-fullpage'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Menu, X } from 'lucide-react'
+import { Menu, X, Mail, Phone, MapPin, ChevronDown } from 'lucide-react'
 import { Button } from '@/components/ui/button.jsx'
 import './App.css'
 
@@ -73,82 +74,53 @@ const paintings = [
 ]
 
 function App() {
-  const [currentSection, setCurrentSection] = useState('home')
+  const [currentSection, setCurrentSection] = useState(0)
   const [selectedPainting, setSelectedPainting] = useState(null)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
 
-  // Function to determine which section is currently in view
-  const getCurrentSection = () => {
-    const sections = ['home', 'prace', 'about', 'contact']
-    const scrollPosition = window.scrollY + window.innerHeight / 2
-    
-    for (let i = sections.length - 1; i >= 0; i--) {
-      const section = document.getElementById(sections[i])
-      if (section && section.offsetTop <= scrollPosition) {
-        return sections[i]
-      }
-    }
-    return 'home'
-  }
+  const sectionNames = ['home', 'about', 'prace-header', 'prace-gallery1', 'prace-gallery2', 'contact']
+  
+  // Create menu items for navigation (combining prace sections into one menu item)
+  const menuItems = [
+    { name: 'home', label: 'Główna', sectionIndex: 0 },
+    { name: 'about', label: 'O mnie', sectionIndex: 1 },
+    { name: 'prace', label: 'prace', sectionIndex: 2 }, // Navigate to first prace section
+    { name: 'contact', label: 'Kontakt', sectionIndex: 5 }
+  ]
 
-  // Scroll event listener to update active section
-  useEffect(() => {
-    const handleScroll = () => {
-      const section = getCurrentSection()
-      if (section !== currentSection) {
-        setCurrentSection(section)
-      }
-    }
-
-    window.addEventListener('scroll', handleScroll, { passive: true })
-    
-    // Set initial section on mount
-    handleScroll()
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll)
-    }
-  }, [currentSection])
-
-  const scrollToSection = (section) => {
-    setCurrentSection(section)
-    setIsMenuOpen(false)
-    
-    const targetElement = document.getElementById(section)
-    if (targetElement) {
-      targetElement.scrollIntoView({ 
-        behavior: 'smooth',
-        block: 'start'
-      })
+  const navigateToSection = (sectionIndex) => {
+    if (window.fullpage_api) {
+      window.fullpage_api.moveTo(sectionIndex + 1)
+      setIsMenuOpen(false)
     }
   }
 
   return (
-    <div className="min-h-screen bg-white text-black scroll-smooth" style={{scrollSnapType: 'y mandatory'}}>
-      {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-sm border-b border-gray-200">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
+    <div className="App">
+      {/* Fixed Navigation */}
+      <nav className="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-b border-gray-200 z-50">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
           <motion.div 
             className="flex items-center cursor-pointer"
-            onClick={() => scrollToSection('home')}
             whileHover={{ scale: 1.05 }}
+            onClick={() => navigateToSection(0)}
           >
             <img src={signatureImage} alt="Agnieszka Byrtus" className="h-8" />
           </motion.div>
           
           {/* Desktop Menu */}
           <div className="hidden md:flex space-x-8">
-            {['home', 'prace', 'about', 'contact'].map((section) => (
+            {menuItems.map((item) => (
               <button
-                key={section}
-                onClick={() => scrollToSection(section)}
-                className={`text-xs uppercase tracking-wider transition-colors duration-300 hover:text-gray-600 ${
-                  currentSection === section ? 'text-black font-medium' : 'text-gray-400'
+                key={item.name}
+                onClick={() => navigateToSection(item.sectionIndex)}
+                className={`text-xs uppercase tracking-wider transition-colors duration-300 hover:text-gray-600 cursor-pointer ${
+                  (item.name === 'prace' && (currentSection >= 2 && currentSection <= 4)) ||
+                  (item.name !== 'prace' && currentSection === item.sectionIndex) 
+                    ? 'text-black font-medium' : 'text-gray-400'
                 }`}
               >
-                {section === 'home' ? 'Główna' : 
-                 section === 'prace' ? 'prace' :
-                 section === 'about' ? 'O mnie' : 'Kontakt'}
+                {item.label}
               </button>
             ))}
           </div>
@@ -172,15 +144,13 @@ function App() {
               className="md:hidden bg-white border-t border-gray-200"
             >
               <div className="px-6 py-4 space-y-4">
-                {['home', 'prace', 'about', 'contact'].map((section) => (
+                {menuItems.map((item) => (
                   <button
-                    key={section}
-                    onClick={() => scrollToSection(section)}
-                    className="block text-xs uppercase tracking-wider text-gray-700 hover:text-black"
+                    key={item.name}
+                    onClick={() => navigateToSection(item.sectionIndex)}
+                    className="block text-xs uppercase tracking-wider text-gray-700 hover:text-black cursor-pointer"
                   >
-                    {section === 'home' ? 'Główna' : 
-                     section === 'prace' ? 'prace' :
-                     section === 'about' ? 'O mnie' : 'Kontakt'}
+                    {item.label}
                   </button>
                 ))}
               </div>
@@ -189,262 +159,301 @@ function App() {
         </AnimatePresence>
       </nav>
 
-      {/* Hero Section */}
-      <section id="home" className="min-h-screen flex items-center justify-center px-6 bg-gradient-to-b from-white to-gray-50 relative overflow-hidden snap-start">
-        {/* Background element */}
-        <div className="absolute inset-0 bg-gradient-to-br from-gray-50/30 to-gray-100/20"></div>
-        
-        <div className="text-center max-w-6xl relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-          >
-            <div>
-              <img 
-                src={logoImage} 
-                alt="Agnieszka Byrtus" 
-                className="h-32 sm:h-48 md:h-56 lg:h-70 mx-auto mb-8 sm:mb-10 md:mb-12 max-w-full object-contain" 
-              />
-            </div>
-            <h1 className="text-5xl md:text-5xl lg:text-[8rem] font-light spacing-tight mb-8  leading-none tracking-normal">
-              agnieszka 
-              <br />
-              byrtus
-            </h1>
-            <p className="text-2xl md:text-lg lg:text-2xl text-gray-600 mb-12 pt-16 font-light tracking-wide uppercase">
-              ślady istnienia
-            </p>
-            <motion.div
-              // whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <Button 
-                onClick={() => scrollToSection('prace')}
-                variant="outline"
-                className="animated-button border-black text-black cursor-pointer rounded-none text-xs uppercase tracking-wider px-16 py-3 relative overflow-hidden"
-              >
-                <span className="relative z-10">Zobacz prace</span>
-              </Button>
-            </motion.div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* prace Section - Introduction */}
-      <section id="prace" className="min-h-screen py-20 px-6 flex items-center relative snap-start">
-        {/* Background */}
-        <div className="absolute inset-0 bg-gradient-to-t from-gray-50/20 to-transparent"></div>
-        
-        <div className="max-w-6xl mx-auto w-full relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            viewport={{ once: true }}
-            className="text-center mb-16"
-          >
-            <h2 className="text-6xl md:text-7xl font-light mb-6 tracking-wide">
-              prace
-            </h2>
-            <p className="text-gray-600 max-w-3xl mx-auto text-sm mb-12">
-              Świat, w którym forma staje się językiem duszy. Każdy obraz to zapisana emocja, ślad ciszy, szept istnienia.
-            </p>
-            <p className="text-gray-500 text-xs uppercase tracking-wider">
-              Przewiń w dół aby zobaczyć prace
-            </p>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Portfolio Page 1 - Paintings 1-3 */}
-      <section className="min-h-screen py-20 px-6 flex items-center relative snap-start">
-        <div className="max-w-6xl mx-auto w-full">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-center">
-            {paintings.slice(0, 3).map((painting, index) => (
-              <motion.div
-                key={painting.id}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: index * 0.2 }}
-                viewport={{ once: true }}
-                className="group cursor-pointer"
-                onClick={() => setSelectedPainting(painting)}
-            
-                  
-              >
-                <div className="relative overflow-hidden bg-gray-100 aspect-[4/5]">
-                  <img 
-                    src={painting.image} 
-                    alt={painting.title}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300" />
-                </div>
-                <h3 className="text-md uppercase font-medium mt-4 mb-2 tracking-wide">{painting.title}</h3>
-                <p className="text-gray-600 text-xs line-clamp-2">{painting.description}</p>
-              </motion.div>
-            ))}
-          </div>
-          <div className="text-center mt-16">
-            <p className="text-gray-500 text-xs uppercase tracking-wider">
-              1 / 2 — Przewiń dalej
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* Portfolio Page 2 - Paintings 4-6 */}
-      <section className="min-h-screen py-20 px-6 flex items-center relative bg-gray-50/30 snap-start">
-        <div className="max-w-6xl mx-auto w-full">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-center">
-            {paintings.slice(3, 6).map((painting, index) => (
-              <motion.div
-                key={painting.id}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: index * 0.2 }}
-                viewport={{ once: true }}
-                className="group cursor-pointer"
-                onClick={() => setSelectedPainting(painting)}
-              >
-                <div className="relative overflow-hidden bg-gray-100 aspect-[4/5]">
-                  <img 
-                    src={painting.image} 
-                    alt={painting.title}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300" />
-                </div>
-                <h3 className="text-md uppercase font-medium mt-4 mb-2 tracking-wide">{painting.title}</h3>
-                <p className="text-gray-600 text-xs line-clamp-2">{painting.description}</p>
-              </motion.div>
-            ))}
-          </div>
-          <div className="text-center mt-16">
-            <p className="text-gray-500 text-xs uppercase tracking-wider">
-              2 / 2 
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* About Section */}
-      <section id="about" className="py-32 px-6 bg-gray-50 min-h-screen flex items-center relative overflow-hidden snap-start">
-        {/* Background element */}
-        <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-gray-100/30"></div>
-        
-        <div className="max-w-6xl mx-auto w-full relative z-10">
-          {/* Mobile-first layout: flex-col, then lg:grid */}
-          <div className="flex flex-col lg:grid lg:grid-cols-2 gap-16 items-center">
-            
-            {/* Heading - Always first on mobile */}
-            <div className="w-full lg:hidden text-center">
-              <motion.h2 
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8 }}
-                viewport={{ once: true }}
-                className="text-5xl md:text-6xl font-light mb-8 tracking-wide"
-              >
-                o mnie
-              </motion.h2>
-            </div>
-
-            {/* Photo - Second on mobile, second column on desktop */}
-            <motion.div
-              initial={{ opacity: 0, x: 30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8 }}
-              viewport={{ once: true }}
-              className="relative order-1 lg:order-2 w-full"
-              
-            >
-              <img 
-                src={authorPhoto} 
-                alt="Agnieszka Byrtus" 
-                className="w-full h-auto shadow-lg max-w-md mx-auto lg:max-w-none"
+      {/* ReactFullpage Implementation */}
+      <ReactFullpage
+        licenseKey={'gplv3-license'}
+        scrollingSpeed={1000}
+        navigation={false}
+        scrollBar={false}
+        scrollOverflow={true}
+        touchSensitivity={15}
+        normalScrollElementTouchThreshold={5}
+        keyboardScrolling={true}
+        animateAnchor={false}
+        recordHistory={false}
+        // touchWrapper={true}
+        bigSectionsDestination={'top'}
+        responsiveWidth={0}
+        responsiveHeight={0}
+        onLeave={(origin, destination) => {
+          setCurrentSection(destination.index)
+        }}
+        render={({ state, fullpageApi }) => {
+          // Store fullpageApi globally for navigation
+          if (fullpageApi) {
+            window.fullpage_api = fullpageApi
+          }
+          
+          return (
+            <ReactFullpage.Wrapper>
+              {/* Hero Section */}
+              <div className="section">
+                <div className="min-h-screen flex items-center justify-center px-6 bg-gradient-to-b from-white to-gray-50 relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-br from-gray-50/30 to-gray-100/20"></div>
                 
-              />
-            </motion.div>
-
-            {/* Text content - Third on mobile, first column on desktop */}
-            <motion.div
-              initial={{ opacity: 0, x: -30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8 }}
-              viewport={{ once: true }}
-              className="order-2 lg:order-1 w-full"
-            >
-              {/* Desktop heading - hidden on mobile */}
-              <h2 className="hidden lg:block text-6xl md:text-7xl font-light mb-8 tracking-wide">
-                o mnie
-              </h2>
-              
-              <div>
-                <p className="text-gray-700 leading-relaxed mb-6 text-sm">
-                  Płótno jest dla mnie przestrzenią ciszy, w której szukam dialogu z tym, co niewyrażalne. Moja twórczość rodzi się z potrzeby introspekcji i zatrzymania się nad fundamentalnymi pytaniami o ludzką egzystencję. 
-                  Mieszkam i tworzę w Warszawie. Jestem osobą niezwykle wrażliwą i głęboko myślącą, 
-                  co znajduje odzwierciedlenie w mojej sztuce.
-                </p>
-                <p className="text-gray-700 leading-relaxed mb-6 text-sm">
-                 Poprzez subtelną formę i monochromatyczną paletę barw opowiadam o niewidzialnych więziach, które nas łączą. Biel i czerń stają się nośnikami niedokończonych interpretacji, pozwalając, by to Twoja wrażliwość dopowiedziała resztę historii. 
-                 
-                </p>
-                <p className="text-gray-700 leading-relaxed text-sm">
-                  Każdy obraz to zaproszenie nie tyle do oglądania, co do odczuwania. To próba dotknięcia tego, co w nas najgłębsze i najbardziej autentyczne.
-                </p>
+                  <div className="text-center max-w-6xl relative z-10">
+                    <motion.div
+                      initial={{ opacity: 0, y: 30 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.8 }}
+                    >
+                      <div>
+                        <img 
+                          src={logoImage} 
+                          alt="Agnieszka Byrtus" 
+                          className="h-32 sm:h-48 md:h-56 lg:h-70 mx-auto mb-8 sm:mb-10 md:mb-12 max-w-full object-contain" 
+                        />
+                      </div>
+                      <h1 className="text-5xl md:text-5xl lg:text-[8rem] font-light spacing-tight mb-8  leading-none tracking-normal">
+                        agnieszka 
+                        <br />
+                        byrtus
+                      </h1>
+                      <p className="text-2xl md:text-lg lg:text-2xl text-gray-600 mb-12 pt-8 font-light tracking-wide uppercase">
+                        ślady istnienia
+                      </p>
+                      <motion.div
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        <Button 
+                          onClick={() => navigateToSection(2)}
+                          variant="outline"
+                          className="animated-button border-black text-black cursor-pointer rounded-none text-xs uppercase tracking-wider px-16 py-3 relative overflow-hidden"
+                        >
+                          <span className="relative z-10">Zobacz prace</span>
+                        </Button>
+                      </motion.div>
+                    </motion.div>
+                  </div>
+                </div>
               </div>
-            </motion.div>
 
-          </div>
-        </div>
-      </section>
+              {/* About Section */}
+              <div className="section">
+                <div className="py-32 px-6 bg-gray-50 min-h-screen flex items-center relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-gray-100/30"></div>
+                  
+                  <div className="max-w-6xl mx-auto w-full relative z-10">
+                    <div className="flex flex-col lg:grid lg:grid-cols-2 gap-16 items-center">
+                      
+                      {/* Heading - Always first on mobile */}
+                      <div className="w-full lg:hidden text-center">
+                        <motion.h2 
+                          initial={{ opacity: 0, y: 30 }}
+                          whileInView={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.8 }}
+                          viewport={{ once: true }}
+                          className="text-5xl md:text-6xl font-light mb-8 tracking-wide"
+                        >
+                          o mnie
+                        </motion.h2>
+                      </div>
 
-    
+                      {/* Photo */}
+                      <motion.div
+                        initial={{ opacity: 0, x: 30 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.8 }}
+                        viewport={{ once: true }}
+                        className="relative order-1 lg:order-2 w-full"
+                      >
+                        <img 
+                          src={authorPhoto} 
+                          alt="Agnieszka Byrtus" 
+                          className="w-full h-auto shadow-lg max-w-md mx-auto lg:max-w-none"
+                        />
+                      </motion.div>
 
-      {/* Contact Section */}
-      <section id="contact" className="py-16 md:py-24 lg:py-32 px-6 bg-gray-50 min-h-screen flex items-start md:items-center justify-center relative overflow-hidden snap-start">
-        {/* Background */}
-        <div className="absolute inset-0 bg-gradient-to-t from-white/60 to-gray-100/30"></div>
+                      {/* Text content */}
+                      <motion.div
+                        initial={{ opacity: 0, x: -30 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.8 }}
+                        viewport={{ once: true }}
+                        className="order-2 lg:order-1 w-full"
+                      >
+                        <h2 className="hidden lg:block text-6xl md:text-7xl font-light mb-8 tracking-wide">
+                          o mnie
+                        </h2>
+                        
+                        <div>
+                          <p className="text-gray-700 leading-relaxed mb-6 text-sm">
+                            Płótno jest dla mnie przestrzenią ciszy, w której szukam dialogu z tym, co niewyrażalne. Moja twórczość rodzi się z potrzeby introspekcji i zatrzymania się nad fundamentalnymi pytaniami o ludzką egzystencję. 
+                            Mieszkam i tworzę w Warszawie. Jestem osobą niezwykle wrażliwą i głęboko myślącą, 
+                            co znajduje odzwierciedlenie w mojej sztuce.
+                          </p>
+                          <p className="text-gray-700 leading-relaxed mb-6 text-sm">
+                            W moich pracach często przewija się temat przemijania, pamięci i śladów, które pozostawiamy po sobie. 
+                            Każdy obraz to dla mnie próba uchwycenia ulotnej chwili, zapisania emocji w formie, która przetrwa dłużej niż słowa.
+                          </p>
+                          <p className="text-gray-700 leading-relaxed text-sm">
+                            Inspirację czerpię z codzienności, z obserwacji ludzi i ich reakcji na świat. Interesuje mnie to, co kryje się pod powierzchnią – 
+                            niewidoczne napięcia, ukryte emocje, cichy dramat egzystencji.
+                          </p>
+                        </div>
+                      </motion.div>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
-        <div className="max-w-4xl mx-auto text-center w-full relative pt-8 md:pt-0">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            viewport={{ once: true }}
-            
-          >
-            <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-light mb-6 md:mb-8 tracking-wide">
-              kontakt
-            </h2>
-            <p className="text-gray-700 mb-8 md:mb-12 max-w-2xl mx-auto text-sm leading-relaxed">
+              {/* Prace Header Section */}
+              <div className="section">
+                <div className="py-32 px-6 bg-white min-h-screen flex items-center justify-center relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-br from-gray-50/30 to-white/50"></div>
+                  
+                  <div className="max-w-4xl mx-auto text-center relative z-10">
+                    <motion.div
+                      initial={{ opacity: 0, y: 30 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.8 }}
+                      viewport={{ once: true }}
+                      className="text-center"
+                    >
+                      <h2 className="text-6xl md:text-7xl font-light mb-6 tracking-wide">
+                        prace
+                      </h2>
+                      <p className="text-gray-600 max-w-3xl mx-auto text-sm mb-16">
+                        Świat, w którym forma staje się językiem duszy. Każdy obraz to zapisana emocja, ślad ciszy, szept istnienia.
+                      </p>
+                      
+                      {/* Scroll Down Indicator */}
+                      <motion.div
+                        animate={{ y: [0, 10, 0] }}
+                        transition={{ duration: 2, repeat: Infinity }}
+                        className="flex flex-col items-center cursor-pointer"
+                        onClick={() => navigateToSection(3)} // Navigate to first gallery
+                      >
+                        <span className="text-xs uppercase tracking-wider text-gray-500 mb-2">
+                          Przewijaj w dół
+                        </span>
+                        <ChevronDown className="w-5 h-5 text-gray-400" />
+                      </motion.div>
+                    </motion.div>
+                  </div>
+                </div>
+              </div>
+
+              {/* First Gallery Section */}
+              <div className="section">
+                <div className="py-32 px-6 bg-gray-50 min-h-screen flex items-center relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/40 to-gray-100/30"></div>
+                  
+                  <div className="max-w-7xl mx-auto w-full relative z-10">
+                    {/* Portfolio Grid - First 3 paintings */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-center">
+                      {paintings.slice(0, 3).map((painting, index) => (
+                        <motion.div
+                          key={painting.id}
+                          initial={{ opacity: 0, y: 30 }}
+                          whileInView={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.6, delay: index * 0.1 }}
+                          viewport={{ once: true }}
+                          className="group cursor-pointer"
+                          onClick={() => setSelectedPainting(painting)}
+                        >
+                          <div className="relative overflow-hidden bg-gray-100 aspect-[4/5]">
+                            <img 
+                              src={painting.image} 
+                              alt={painting.title}
+                              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                            />
+                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300" />
+                          </div>
+                          <h3 className="text-md uppercase font-medium mt-4 mb-2 tracking-wide">{painting.title}</h3>
+                          <p className="text-gray-600 text-xs line-clamp-2">{painting.description}</p>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Second Gallery Section */}
+              <div className="section">
+                <div className="py-32 px-6 bg-white min-h-screen flex items-center relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-br from-gray-50/30 to-white/50"></div>
+                  
+                  <div className="max-w-7xl mx-auto w-full relative z-10">
+                    {/* Portfolio Grid - Last 3 paintings */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-center">
+                      {paintings.slice(3, 6).map((painting, index) => (
+                        <motion.div
+                          key={painting.id}
+                          initial={{ opacity: 0, y: 30 }}
+                          whileInView={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.6, delay: index * 0.1 }}
+                          viewport={{ once: true }}
+                          className="group cursor-pointer"
+                          onClick={() => setSelectedPainting(painting)}
+                        >
+                          <div className="relative overflow-hidden bg-gray-100 aspect-[4/5]">
+                            <img 
+                              src={painting.image} 
+                              alt={painting.title}
+                              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                            />
+                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300" />
+                          </div>
+                          <h3 className="text-md uppercase font-medium mt-4 mb-2 tracking-wide">{painting.title}</h3>
+                          <p className="text-gray-600 text-xs line-clamp-2">{painting.description}</p>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Contact Section */}
+              <div className="section">
+                <div className="py-16 md:py-24 lg:py-32 px-6 bg-gray-50 min-h-screen flex items-start md:items-center justify-center relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-t from-white/60 to-gray-100/30"></div>
+
+                  <div className="max-w-4xl mx-auto w-full relative z-10 pt-16 md:pt-0">
+                    <motion.div
+                      initial={{ opacity: 0, y: 30 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.8 }}
+                      viewport={{ once: true }}
+                      className="text-center"
+                    >
+                      <h2 className="text-5xl md:text-6xl lg:text-7xl font-light mb-12 md:mb-16 tracking-wide">
+                        kontakt
+                      </h2>
+<p className="text-gray-700 mb-8 md:mb-12 max-w-2xl mx-auto text-sm leading-relaxed">
               Jeśli któraś z moich prac poruszyła Cię – napisz do mnie. 
               <br />
               Chętnie opowiem więcej o swojej twórczości lub porozmawiam o możliwościach współpracy.
               <br />
               Sztuka żyje w relacji z odbiorcą, który nadaje moim pracom ostateczny sens.
             </p>
-            <div className="space-y-4 md:space-y-6">
-              <p className="text-md">
-                <b>email:</b> agnieszka.byrtus@art.com
-              </p>
-              <p className="text-md">
-                <b>lokalizacja:</b> Warszawa, Polska
-              </p>
-              <div className="flex justify-center space-x-8 mt-8 md:mt-12 pb-4">
-                <a href="#" className="text-gray-600 hover:text-black transition-colors text-sm uppercase tracking-wider">
-                  Instagram
-                </a>
-                <a href="#" className="text-gray-600 hover:text-black transition-colors text-sm uppercase tracking-wider">
-                  Facebook
-                </a>
+                      <div className="space-y-2 md:text-center mb-8 md:mb-12">
+                        
+                        <div className="flex items-center justify-center gap-3">
+                          <Mail className="w-5 h-5 text-gray-600" />
+                          <span className="text-gray-700 text-sm">agnieszka@byrtus.pl</span>
+                        </div>
+                        
+                        <div className="flex items-center justify-center gap-3">
+                          <Phone className="w-5 h-5 text-gray-600" />
+                          <span className="text-gray-700 text-sm">+48 123 456 789</span>
+                        </div>
+                        
+                        <div className="flex items-center justify-center gap-3">
+                          <MapPin className="w-5 h-5 text-gray-600" />
+                          <span className="text-gray-700 text-sm">Warszawa, Polska</span>
+                        </div>
+                      </div>
+                      
+                      
+                    </motion.div>
+                  </div>
+                </div>
               </div>
-            </div>
-          </motion.div>
-        </div>
-      </section>
+            </ReactFullpage.Wrapper>
+          )
+        }}
+      />
 
       {/* Painting Modal */}
       <AnimatePresence>
@@ -453,50 +462,43 @@ function App() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-6"
+            className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-4"
             onClick={() => setSelectedPainting(null)}
           >
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.8, opacity: 0 }}
-              className="bg-white max-w-5xl w-full max-h-[90vh] overflow-y-auto"
+              className="bg-white max-w-4xl w-full max-h-[90vh] overflow-auto relative"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="p-8">
-                <div className="flex justify-between items-start mb-8">
-                  <h3 className="text-3xl font-light tracking-wide">{selectedPainting.title}</h3>
-                  <button
-                    onClick={() => setSelectedPainting(null)}
-                    className="text-gray-500 hover:text-black"
-                  >
-                    <X size={24} />
-                  </button>
-                </div>
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <button
+                onClick={() => setSelectedPainting(null)}
+                className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 z-10"
+              >
+                <X size={24} />
+              </button>
+              
+              <div className="grid grid-cols-1 lg:grid-cols-2">
+                <div className="relative">
                   <img 
                     src={selectedPainting.image} 
                     alt={selectedPainting.title}
-                    className="w-full h-auto"
+                    className="w-full h-full object-cover min-h-[400px] lg:min-h-[600px]"
                   />
-                  <div className="space-y-6">
-                    <p className="text-gray-700 leading-relaxed text-sm">
-                      {selectedPainting.description}
-                    </p>
-                    <div className="border-t border-gray-200 pt-6 space-y-3">
-                      <div className="flex justify-between">
-                        <span className="text-xs uppercase tracking-wider text-gray-500">Wymiary:</span>
-                        <span className="text-sm font-medium">{selectedPainting.dimensions}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-xs uppercase tracking-wider text-gray-500">Technika:</span>
-                        <span className="text-sm font-medium">{selectedPainting.technique}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-xs uppercase tracking-wider text-gray-500">Rok:</span>
-                        <span className="text-sm font-medium">{selectedPainting.year}</span>
-                      </div>
-                    </div>
+                </div>
+                
+                <div className="p-8 lg:p-12 flex flex-col justify-center">
+                  <h3 className="text-2xl lg:text-3xl font-light mb-4 uppercase tracking-wide">
+                    {selectedPainting.title}
+                  </h3>
+                  <p className="text-gray-600 mb-6 leading-relaxed">
+                    {selectedPainting.description}
+                  </p>
+                  <div className="space-y-2 text-sm text-gray-500">
+                    <p><span className="font-medium">Wymiary:</span> {selectedPainting.dimensions}</p>
+                    <p><span className="font-medium">Technika:</span> {selectedPainting.technique}</p>
+                    <p><span className="font-medium">Rok:</span> {selectedPainting.year}</p>
                   </div>
                 </div>
               </div>
@@ -509,4 +511,3 @@ function App() {
 }
 
 export default App
-
