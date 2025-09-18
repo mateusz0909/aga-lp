@@ -77,33 +77,41 @@ function App() {
   const [currentSection, setCurrentSection] = useState(0)
   const [selectedPainting, setSelectedPainting] = useState(null)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [timeRemaining, setTimeRemaining] = useState(null)
-  const [showCountdown, setShowCountdown] = useState(false)
 
   // Birthday date: 24.09.2025 6AM CET
   let birthdayDate = new Date('2025-09-24T06:00:00+02:00') 
-  // birthdayDate = new Date('2025-09-17T22:29:00+01:00') // 23:44 CET
+  // birthdayDate = new Date('2025-09-18T09:32:00+01:00') // 
+
+  // Calculate initial countdown state immediately
+  const calculateCountdown = () => {
+    const now = new Date()
+    const difference = birthdayDate.getTime() - now.getTime()
+
+    if (difference > 0) {
+      const days = Math.floor(difference / (1000 * 60 * 60 * 24))
+      const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+      const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60))
+      const seconds = Math.floor((difference % (1000 * 60)) / 1000)
+
+      return { days, hours, minutes, seconds, shouldShow: true }
+    }
+    
+    return { days: 0, hours: 0, minutes: 0, seconds: 0, shouldShow: false }
+  }
+
+  // Initialize with calculated values
+  const initialCountdown = calculateCountdown()
+  const [timeRemaining, setTimeRemaining] = useState(initialCountdown)
+  const [showCountdown, setShowCountdown] = useState(initialCountdown.shouldShow)
 
   // Countdown logic
   useEffect(() => {
     const updateCountdown = () => {
-      const now = new Date()
-      const difference = birthdayDate.getTime() - now.getTime()
-
-      if (difference > 0) {
-        const days = Math.floor(difference / (1000 * 60 * 60 * 24))
-        const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
-        const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60))
-        const seconds = Math.floor((difference % (1000 * 60)) / 1000)
-
-        setTimeRemaining({ days, hours, minutes, seconds })
-        setShowCountdown(true)
-      } else {
-        setShowCountdown(false)
-      }
+      const countdown = calculateCountdown()
+      setTimeRemaining(countdown)
+      setShowCountdown(countdown.shouldShow)
     }
 
-    updateCountdown()
     const interval = setInterval(updateCountdown, 1000)
 
     return () => clearInterval(interval)
@@ -128,8 +136,10 @@ function App() {
 
   return (
     <div className="App">
-      {/* Fixed Navigation */}
-      <nav className="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-b border-gray-200 z-50">
+      {!showCountdown && (
+        <>
+          {/* Fixed Navigation */}
+          <nav className="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-sm border-b border-gray-200 z-50">
         <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
           <motion.div 
             className="flex items-center cursor-pointer"
@@ -537,6 +547,8 @@ function App() {
           </motion.div>
         )}
       </AnimatePresence>
+        </>
+      )}
 
       {/* Birthday Countdown Overlay */}
       <AnimatePresence>
@@ -555,10 +567,12 @@ function App() {
                 className="mb-12"
               >
                 <h1 className="text-4xl md:text-6xl lg:text-7xl font-light text-white mb-6 tracking-wide">
-                  Prezent czeka...
+                  Kochana Koszko...
                 </h1>
                 <p className="text-gray-300 text-lg md:text-xl max-w-3xl mx-auto leading-relaxed mb-2">
-                  Ten wyjątkowy dar będzie można rozpakować już niebawem.
+                  Tutaj jest Twoja niespodzianka urodzinowa, którą odbierzesz za: 
+                  <br />
+                  
                 </p>
                
               </motion.div>
